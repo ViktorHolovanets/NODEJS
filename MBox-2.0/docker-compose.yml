@@ -1,0 +1,144 @@
+version: '3'
+services:
+  rabbitmq:
+    image: rabbitmq:3.12.2-management
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    networks:
+      - rabbit_network
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  redis.socket:
+    image: 'redis:alpine'
+    volumes:
+      - './volumes/db/redis/sockets:/data'
+    networks:
+      - rabbit_network
+
+  db:
+    image: 'mysql/mysql-server:latest'
+    environment:
+      MYSQL_ROOT_PASSWORD: 'password!23'
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: 'modelsDb'
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    volumes:
+      - './volumes/database:/var/lib/mysql'
+    networks:
+      - rabbit_network
+
+  socket.right:
+    build: ./producer/socket.producer
+    volumes:
+      - ./producer/socket.producer:/usr/src/app
+    command: sh -c " npm install && npm start "
+    networks:
+      -  rabbit_network
+    depends_on:
+      - redis.socket
+    environment:
+      - SERVER_NAME=socket.right
+
+  socket.left:
+    build: ./producer/socket.producer
+    volumes:
+      - ./producer/socket.producer:/usr/src/app
+    command: sh -c " npm install && npm start "
+    networks:
+      - rabbit_network
+    depends_on:
+      - redis.socket
+    environment:
+      - SERVER_NAME=socket.left
+
+  admin:
+    build:
+      context: ./api/admin
+      dockerfile: Dockerfile
+    networks:
+      - rabbit_network
+    depends_on:
+      - db
+      - rabbitmq
+
+  mailer:
+    build: ./consumer/mailer
+    command: sh -c "npm install && npm run start"
+    volumes:
+      - ./consumer/mailer:/usr/src/app
+    networks:
+      - rabbit_network
+    expose:
+      - "3000"
+    environment:
+      - NAME=mailer
+    depends_on:
+      - rabbitmq
+
+  route:
+    build: ./consumer/route
+    command: sh -c "npm install && npm run start"
+    volumes:
+      - ./consumer/route:/usr/src/app
+    networks:
+      - rabbit_network
+    expose:
+      - "3000"
+    environment:
+      - NAME=route
+    depends_on:
+      - rabbitmq
+      - redis.socket
+
+  socket.emitter:
+    build: ./consumer/socket
+    command: sh -c "npm install && npm run start"
+    volumes:
+      - ./consumer/socket:/usr/src/app
+    networks:
+      - rabbit_network
+    expose:
+      - "3000"
+    environment:
+      - NAME=emitter
+    depends_on:
+      - rabbitmq
+      - redis.socket
+
+  test:
+    build: ./vue-socket-test
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ./vue-socket-test:/usr/src/app
+    networks:
+      - rabbit_network
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - rabbit_network
+    depends_on:
+      - db
+      - admin
+      - mailer
+      - rabbitmq
+      - socket.emitter
+      - socket.left
+      - socket.right
+      - redis.socket
+    ports:
+      - "80:80"
+
+
+networks:
+  rabbit_network:
+    driver: bridge

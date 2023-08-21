@@ -1,0 +1,20 @@
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                docker {
+                    docker-compose build
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                docker {
+                    docker-compose up -d
+                }
+            }
+        }
+    }
+}
+
