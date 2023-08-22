@@ -1,5 +1,8 @@
+import dotenv from 'dotenv';
+
+dotenv.config();
 import {sendNewMail} from "./services/mailer/mailer";
-import startListening from "./services/rabbitmq/rabbitmqConsumer";
+import rabbitMQHandler from "typescript-rabbitmq-handler";
 import IMessage from "./models/IMessage";
 
 
@@ -11,6 +14,9 @@ const RABBITMQ_CONNECTION_URI = `amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFA
 
 const queue = "queue_mailer";
 
- startListening<IMessage>(RABBITMQ_CONNECTION_URI, queue, async (msg) => {
-    await sendNewMail(msg);
-});
+(async ()=>{
+    const rabbit = await rabbitMQHandler.create(RABBITMQ_CONNECTION_URI);
+    await rabbit.startListening<IMessage>(queue, async (msg: IMessage) => {
+        await sendNewMail(msg);
+    });
+})();

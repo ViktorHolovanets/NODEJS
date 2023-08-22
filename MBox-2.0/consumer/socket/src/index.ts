@@ -1,6 +1,3 @@
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 /**
  * Configure RabbitMQ server
@@ -22,7 +19,7 @@ const REDIS_SOCKET_PORT = process.env.REDIS_SOCKET_PORT || 6379;
 const REDIS_SOCKET_CONNECTION_STRING = `redis://${REDIS_SOCKET_HOST}:${REDIS_SOCKET_PORT}`;
 
 
-import startListening from "./rabbitmq/rabbitmqConsumer";
+import rabbitMQHandler from "typescript-rabbitmq-handler";
 import IEvent from "./models/IEvent";
 import {Emitter} from "@socket.io/redis-emitter";
 import {createClient} from "redis";
@@ -35,7 +32,8 @@ import {createClient} from "redis";
         const io = new Emitter(redisClient);
 
         try {
-            await startListening<IEvent>(RABBITMQ_CONNECTION_URI, RABBITMQ_QUEUE_SOCKET, async (msg) => {
+            const rabbit = await rabbitMQHandler.create(RABBITMQ_CONNECTION_URI);
+            await rabbit.startListening<IEvent>(RABBITMQ_QUEUE_SOCKET, async (msg: IEvent) => {
                 if (msg.From) {
                     console.log(`emit for ${msg.From}`)
                     io.to('userId_' + msg.From).emit(msg.Type, msg);
@@ -50,5 +48,4 @@ import {createClient} from "redis";
     } catch (e) {
         console.error("Error connecting to Redis:", e);
     }
-
 })();
