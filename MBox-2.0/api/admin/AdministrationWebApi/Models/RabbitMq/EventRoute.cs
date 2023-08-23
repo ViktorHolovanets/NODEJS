@@ -2,7 +2,9 @@
 {
     public class EventRoute
     {
-        public EmitObject? Socket { get; set; }
-        public MailObject? Mail { get; set; }
+        public object Body { get; set; }
+        public string? From { get; set; }
+        public string Template { get; set; }
+        public string? To { get; set; }
     }
 }

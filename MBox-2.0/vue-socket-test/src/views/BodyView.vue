@@ -26,7 +26,7 @@ export default {
     socket.on("time", (message) => {
       this.receivedMessage = message;
     });
-    socket.on("message", (message) => {
+    socket.on("user_delete", (message) => {
       this.emitterMessage = message;
       console.log(message);
     });

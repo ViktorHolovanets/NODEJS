@@ -25,7 +25,7 @@ export async function sendNewMail(msg: IMessage): Promise<boolean> {
         });
         const mailOptions = {
             from: process.env.MAIL_USER,
-            to: msg.Email,
+            to: msg.Body?.Email,
             subject: 'Music Box',
             html: html
         };

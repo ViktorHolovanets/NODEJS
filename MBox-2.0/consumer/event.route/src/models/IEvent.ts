@@ -1,7 +1,7 @@
-import IMessage from "./IMessage";
-import ISocket from "./ISocket";
 
 export default interface IEvent {
-    Mail: IMessage | null;
-    Socket: ISocket | null;
+    Body: any;
+    From: string | null;
+    Template: string;
+    To: string | null;
 }

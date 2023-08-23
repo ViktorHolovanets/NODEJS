@@ -37,25 +37,18 @@ namespace AdministrationWebApi.Controllers
         public IEnumerable<WeatherForecast> Get()
         {
             var id = Guid.NewGuid();
-            var msg = new MailObject()
-            {
-                Id = id,
-                Email = "victorgolova@gmail.com",
-                Template = "user_delete",
-                Name = "my name",
-                Type = "type",
-                Body = new { Name = "My name" }
-            };
-            var socket = new EmitObject()
-            {               
-                To = ": string | null",
-                Body = new { Name=": any" },
-                Type = "message"
-            };
+          
             var eventObj = new EventRoute()
             {
-                Mail = msg,
-                Socket = socket
+                From = ": string | null",
+                Body = new
+                {
+                    Email = "victorgolova@gmail.com",
+                    Template = "user_delete",
+                    Name = "my name",
+                },
+                Template = "user_delete"
+
             };
             
             _rabbit.SendMessage(eventObj, "queue_event");

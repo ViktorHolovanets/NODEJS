@@ -8,7 +8,7 @@ const RABBITMQ_SERVER = process.env.RABBITMQ_SERVER || 'rabbitmq';
 const RABBITMQ_PORT = process.env.RABBITMQ_PORT || 5672;
 const RABBITMQ_CONNECTION_URI = `amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@${RABBITMQ_SERVER}:${RABBITMQ_PORT}`;
 
-const RABBITMQ_QUEUE_SOCKET = process.env.RABBITMQ_QUEUE_SEND_EMAIL || 'queue_send_socket';
+const RABBITMQ_QUEUE_SOCKET = process.env.RABBITMQ_QUEUE_SEND_EMAIL || 'queue_emitter';
 
 
 /**
@@ -34,12 +34,12 @@ import {createClient} from "redis";
         try {
             const rabbit = await rabbitMQHandler.create(RABBITMQ_CONNECTION_URI);
             await rabbit.startListening<IEvent>(RABBITMQ_QUEUE_SOCKET, async (msg: IEvent) => {
-                if (msg.From) {
-                    console.log(`emit for ${msg.From}`)
-                    io.to('userId_' + msg.From).emit(msg.Type, msg);
+                if (msg.To) {
+                    console.log(`emit for ${msg.To}`)
+                    io.to('userId_' + msg.To).emit(msg.Template, msg);
                 } else {
                     console.log(`emit for everybody`)
-                    io.emit(msg.Type, msg);
+                    io.emit(msg.Template, msg);
                 }
             });
         } catch (err) {
